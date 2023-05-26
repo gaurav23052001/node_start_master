@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  node-api-server:
+    restart: unless-stopped
+    tty: true
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: node-api-server
+    container_name: node-api-server
+    volumes:
+      - /app/node_modules
+      - .:/usr/src/app
+    ports:
+      - ${SERVER_PORT}:${DOCKER_SERVER_PORT}
+    links:
+      - mongo_db
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      MONGODB_URI: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo_db
+    networks:
+      - node-app-network
+
+  mongo_db:
+    image: mongo
+    restart: unless-stopped
+    tty: true
+    container_name: mongo_db    
+    ports:
+        - 0.0.0.0:${MONGODB_LOCAL_PORT}:${MONGODB_DOCKER_PORT}
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+        MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    volumes:
+        - ./mongodb-data:/data/db
+    networks:
+      - node-app-network
+
+networks:
+  node-app-network:
+    driver: bridge
